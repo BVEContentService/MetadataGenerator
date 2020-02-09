@@ -5,6 +5,13 @@ SET SERVER_NAME=https://zbx1425.gitee.io/bcs-src
 SETLOCAL ENABLEDELAYEDEXPANSION
 ECHO BCS Metadata Generator by zbx1425.
 ECHO.
+IF NOT EXIST C:\php\php.exe (
+	COLOR 0C
+	ECHO PHP Not installed!
+	ECHO The metadata generator requires PHP to run normally.
+	PAUSE >NUL
+	EXIT
+)
 IF NOT EXIST C:\php\php.ini COPY C:\php\php.ini-development C:\php\php.ini >NUL
 FIND ";extension=mbstring" C:\php\php.ini 2>NUL >NUL
 IF NOT ERRORLEVEL 1 (
@@ -28,4 +35,5 @@ IF NOT ERRORLEVEL 1 (
 )
 
 C:\php\php.exe metadata-cli.php
+ECHO Done.
 PAUSE >NUL
