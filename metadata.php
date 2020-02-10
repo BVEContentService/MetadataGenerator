@@ -1,5 +1,5 @@
 <?php
-define("SERVER_NAME", "https://api.zbx1425.tk:8953/bcs-src");
+define("SERVER_NAME", ""); //Leave blank for API 1.3 and above
 $isCLI = ($argc>1 && $argv[1]=="cli") || (strpos(php_sapi_name(), "cli")!==false); 
 //php-cgi called from cli with additional parameter
 if ($isCLI) header_remove();

@@ -1,5 +1,5 @@
 <?php
-define("SERVER_NAME", getenv("SERVER_NAME"));
+define("SERVER_NAME", ""); //Leave blank for API 1.3 and above
 onFileUpdate(true);
 
 function onFileUpdate($debug = false){
