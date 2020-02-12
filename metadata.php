@@ -115,7 +115,7 @@ function tryImage(&$target, $key, $file){
         $target[$key]=SERVER_NAME."/".spaceEncode($file);
         if (empty(IMAGE_WIDTH)) return;
         list($width, $height) = getimagesize($file);
-        if ($width==IMAGE_WIDTH) return;
+        //if ($width==IMAGE_WIDTH) return;
         if (endWith($file, ".png")) $src = imagecreatefrompng($file);
         else if (endWith($file, ".jpg")) $src = imagecreatefromjpeg($file);
         else return;

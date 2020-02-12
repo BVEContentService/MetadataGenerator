@@ -1,6 +1,4 @@
 @ECHO off
-REM 您的网站地址, 结尾不带斜杠
-SET SERVER_NAME=https://zbx1425.gitee.io/bcs-src
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 ECHO BCS Metadata Generator by zbx1425.
