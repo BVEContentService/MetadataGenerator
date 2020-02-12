@@ -34,6 +34,6 @@ IF NOT ERRORLEVEL 1 (
 	ECHO.
 )
 
-C:\php\php.exe metadata-cli.php
+C:\php\php.exe metadata.php cli
 ECHO Done.
 PAUSE >NUL
