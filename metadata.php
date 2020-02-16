@@ -1,9 +1,11 @@
 <?php
 define("SERVER_NAME", ""); //Leave blank for API 1.3 and above
+define("PROTOCOL_VER", "1.5");
 define("IMAGE_WIDTH", "300"); // Leave blank if thumbnail zipping is not required
 define("IMAGE_QUALITY", "50");
-$isCLI = ($argc>1 && $argv[1]=="cli") || (strpos(php_sapi_name(), "cli")!==false); 
-$isTemp = $argc>2 && $argv[2]=="temp";
+if (empty($argv)) $argv = array();
+$isCLI = (in_array("cli", $argv) || strpos(php_sapi_name(), "cli")!==false); 
+$isTemp = in_array("temp", $argv);
 //php-cgi called from cli with additional parameter
 if ($isCLI) header_remove();
 if (basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"]) || $isCLI){
@@ -11,7 +13,7 @@ if (basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"]) || $isCLI){
         print("<button onclick=\"location.href='metadata.php'\">返回</a></button>");
         onFileUpdate(true, $isTemp);
     } else {
-        $needRefresh = $isCLI;
+        $needRefresh = ($isCLI && !in_array("cron", $argv));
         if (is_file("index/packs.json") && is_file("index/authors.json")){
             //echo "<table>";
             $metadataTime = min(filemtime("index/packs.json"), filemtime("index/authors.json"));
@@ -50,11 +52,19 @@ function onFileUpdate($debug = false, $isTemp = false){
     $metadata = array();
     $maintainers = array();
     if ($debug) echo "<ol>\n";
+    if (!empty(PROTOCOL_VER)){
+        //For the fucking backward compatibility.
+        $verInfo = array();
+        $verInfo["ID"] = "__PROTOCOL_VERSION";
+        $verInfo["Name_LO"] = PROTOCOL_VER;
+        $verInfo["Name_EN"] = PROTOCOL_VER;
+        array_push($maintainers, $verInfo);
+    }
     foreach (glob("*", GLOB_ONLYDIR) as $author) {
         if (!is_file($author."/author.ini")) continue;
         if ($debug) echo "<li>".$author."</li><ol>\n";
         $authordata = processName(parse_ini_string(
-            characet(file_get_contents($author."/author.ini"))), false);
+        characet(file_get_contents($author."/author.ini"))), false);
         if ($authordata === null) continue;
         tryFile($authordata, "Description", $author."/author.txt");
         tryFile($authordata, "Description", $author."/author.html");
@@ -114,6 +124,11 @@ function tryImage(&$target, $key, $file){
     if (is_file($file)){
         $target[$key]=SERVER_NAME."/".spaceEncode($file);
         if (empty(IMAGE_WIDTH)) return;
+        $newFile = file_ext_replace($file, ".thumb.jpg");
+        if (is_file($newFile) && filemtime($newFile)>=filemtime($file)){
+            $target[$key."LQ"]=SERVER_NAME."/".spaceEncode($newFile);
+            return;
+        }
         list($width, $height) = getimagesize($file);
         //if ($width==IMAGE_WIDTH) return;
         if (endWith($file, ".png")) $src = imagecreatefrompng($file);
@@ -122,7 +137,6 @@ function tryImage(&$target, $key, $file){
         $newHeight = $height * IMAGE_WIDTH / $width;
         $dst = imagecreatetruecolor(IMAGE_WIDTH, $newHeight);
         imagecopyresampled($dst, $src, 0, 0, 0, 0, IMAGE_WIDTH, $newHeight, $width, $height);
-        $newFile = file_ext_replace($file, ".thumb.jpg");
         imagejpeg($dst, $newFile, IMAGE_QUALITY);
         $target[$key."LQ"]=SERVER_NAME."/".spaceEncode($newFile);
     }
@@ -143,11 +157,14 @@ function processName($packdata, $route){
     if ($route){
         $filter = array("Name_LO", "Name_EN", "Name_SA", 
         "Origin_LO", "Origin_EN", "Origin_SA",
-        "Homepage", "Description", "AutoOpen", "ForceView");
+        "Homepage", "Description", "NoFile", "AutoOpen", "ForceView");
         $default = array("ID"=>"", "Description"=>"",
         "Version"=>"1.0", "Author"=>"", "TimeStamp"=>0);
         if (!processLOEN($packdata, "Name")) return null;
         processLOEN($packdata, "Origin");
+        processBool($packdata, "NoFile");
+        processBool($packdata, "AutoOpen");
+        processBool($packdata, "ForceView");
     } else {
         $filter = array("Name_LO", "Name_EN", "Name_SA", "Homepage", "Description");
         $default = array("ID"=>"", "Description"=>"");
@@ -167,6 +184,12 @@ function processLOEN(&$packdata, $tag){
         return false;
     }
     return true;
+}
+
+function processBool(&$packdata, $tag){
+    if (isset($packdata[$tag])){
+        $packdata[$tag] = ($packdata[$tag] == "1" || strtolower($packdata[$tag]) == "true");
+    }
 }
 
 function packageSort($a, $b){
