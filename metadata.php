@@ -226,10 +226,10 @@ function RScanDir($dir, $ext="", $includeDir = false){
     foreach($file_arr as $item){
         if($item!=".." && $item !="." && $item[0]!="."){
             if(is_dir($dir."/".$item)){
+                if ($includeDir) array_push($files, $dir."/".$item);
                 foreach (RScanDir($dir."/".$item, $ext) as $item){
                     array_push($files, $item);
                 }
-                if ($includeDir) array_push($files, $item);
             }else{
                 if (endWith($item, $ext)) array_push($files, $dir."/".$item);
             }
