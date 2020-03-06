@@ -1,13 +1,16 @@
 <?php
-define("SERVER_NAME", ""); //Leave blank for API 1.3 and above
-define("PROTOCOL_VER", "1.5");
+define("SERVER_NAME", ""); //Leave blank for PROTOCOL_VER 1.3 and above
+define("PROTOCOL_VER", "1.9");
 define("IMAGE_WIDTH", "300"); // Leave blank if thumbnail zipping is not required
 define("IMAGE_QUALITY", "50");
 if (empty($argv)) $argv = array();
 $isCLI = (in_array("cli", $argv) || strpos(php_sapi_name(), "cli")!==false); 
 $isTemp = in_array("temp", $argv);
 //php-cgi called from cli with additional parameter
-if ($isCLI) header_remove();
+if ($isCLI){
+    header_remove();
+    echo "Do not forget to check for update from https://github.com/BVEContentService/MetadataGenerator regularly!\n";
+}
 if (basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"]) || $isCLI){
     if (isset($_GET["act"])){
         print("<button onclick=\"location.href='metadata.php'\">返回</a></button>");
@@ -71,8 +74,7 @@ function onFileUpdate($debug = false, $isTemp = false){
         $authordata["ID"] = implode("@", explode(".", $author, 2));
         foreach (RScanDir($author, ".ini") as $packset){
             if ($packset == $author."/author.ini") continue;
-            $packdata = processName(parse_ini_string(
-            characet(file_get_contents($packset))), true);
+            $packdata = processName(parse_ini_string(characet(file_get_contents($packset))), true);
             if ($packdata === null) continue;
             $nameparts = explode("_", basename($packset, ".ini"));
             $pnwve = dirname($packset)."/".$nameparts[0];
@@ -157,7 +159,10 @@ function processName($packdata, $route){
     if ($route){
         $filter = array("Name_LO", "Name_EN", "Name_SA", 
         "Origin_LO", "Origin_EN", "Origin_SA",
-        "Homepage", "Description", "NoFile", "AutoOpen", "ForceView");
+        "Homepage", "Description", "NoFile", "AutoOpen", "ForceView", "GuidedDownload",
+        "File_H2", "File_OB", "File_B5",
+        "FileSize_H2", "FileSize_OB", "FileSize_B5",
+        "Referer_H2", "Referer_OB", "Referer_B5");
         $default = array("ID"=>"", "Description"=>"",
         "Version"=>"1.0", "Author"=>"", "TimeStamp"=>0);
         if (!processLOEN($packdata, "Name")) return null;
@@ -165,6 +170,7 @@ function processName($packdata, $route){
         processBool($packdata, "NoFile");
         processBool($packdata, "AutoOpen");
         processBool($packdata, "ForceView");
+        processBool($packdata, "GuidedDownload");
     } else {
         $filter = array("Name_LO", "Name_EN", "Name_SA", "Homepage", "Description");
         $default = array("ID"=>"", "Description"=>"");
